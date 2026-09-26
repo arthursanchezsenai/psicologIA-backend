@@ -5,6 +5,25 @@ const promptButtons = document.querySelectorAll('.prompt-btn');
 const clearChatButton = document.getElementById('clearChat');
 
 const STORAGE_KEY = 'psicologia-chat-history';
+const CLIENT_ID_KEY = 'psicologia-client-id';
+
+const getClientId = () => {
+  const saved = localStorage.getItem(CLIENT_ID_KEY);
+
+  if (saved) {
+    return saved;
+  }
+
+  const generated =
+    globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function'
+      ? globalThis.crypto.randomUUID()
+      : `client-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+  localStorage.setItem(CLIENT_ID_KEY, generated);
+  return generated;
+};
+
+const CLIENT_ID = getClientId();
 
 const getInitialMessages = () => {
   const saved = localStorage.getItem(STORAGE_KEY);
@@ -98,7 +117,10 @@ const sendToBot = async (text) => {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ message: trimmed })
+      body: JSON.stringify({
+        message: trimmed,
+        clientId: CLIENT_ID
+      })
     });
 
     const data = await response.json();
