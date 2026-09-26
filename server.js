@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const express = require('express');
 const path = require('path');
+const { randomUUID } = require('node:crypto');
 const OpenAI = require('openai');
 
 const app = express();
@@ -12,7 +13,6 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const openaiClient = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname)));
 
 function getBotReply(message) {
   const text = message.toLowerCase().trim();
@@ -105,6 +105,7 @@ app.get('/api/health', (req, res) => {
 
 app.post('/api/chat', async (req, res) => {
   const message = req.body?.message ?? '';
+  const clientId = req.body?.clientId ?? req.body?.id ?? null;
 
   if (!message || !String(message).trim()) {
     return res.status(400).json({
@@ -114,10 +115,13 @@ app.post('/api/chat', async (req, res) => {
   }
 
   const reply = await generateBotReply(String(message));
+  const responseId = randomUUID();
 
   return res.json({
     ok: true,
     response: reply,
+    responseId,
+    clientId,
     botName: BOT_NAME,
     source: openaiClient ? 'openai' : 'local'
   });
