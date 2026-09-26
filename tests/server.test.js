@@ -44,4 +44,5 @@ test('chat endpoint accepts a message and returns a text response', async () => 
   const body = JSON.parse(response.body);
   assert.equal(body.ok, true);
   assert.ok(body.response.length > 0);
+  assert.ok(body.responseId, 'o servidor deve incluir um responseId único na resposta');
 });
