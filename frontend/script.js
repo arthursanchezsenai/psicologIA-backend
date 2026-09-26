@@ -1,169 +1,156 @@
-const chatMessages = document.getElementById('chatMessages');
-const chatForm = document.getElementById('chatForm');
-const userInput = document.getElementById('userInput');
-const promptButtons = document.querySelectorAll('.prompt-btn');
-const clearChatButton = document.getElementById('clearChat');
+require('dotenv').config();
 
-const STORAGE_KEY = 'psicologia-chat-history';
-const CLIENT_ID_KEY = 'psicologia-client-id';
+const express = require('express');
+const path = require('path');
+const { randomUUID } = require('node:crypto');
+const OpenAI = require('openai');
 
-const getClientId = () => {
-  const saved = localStorage.getItem(CLIENT_ID_KEY);
+const app = express();
+const DEFAULT_PORT = Number(process.env.PORT) || 3000;
+const BOT_NAME = 'Iris';
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const FRONTEND_DIR = path.join(__dirname, 'frontend');
 
-  if (saved) {
-    return saved;
+const openaiClient = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
+
+app.use(express.json());
+app.use('/frontend', express.static(FRONTEND_DIR));
+
+function getBotReply(message) {
+  const text = message.toLowerCase().trim();
+
+  if (!text) {
+    return `${BOT_NAME}: Posso te ajudar com o que estiver pesado hoje. Qual é o sentimento mais presente?`;
   }
 
-  const generated =
-    globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function'
-      ? globalThis.crypto.randomUUID()
-      : `client-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  if (text.includes('ansiedade') || text.includes('nervoso') || text.includes('apavorado') || text.includes('panico') || text.includes('pânico')) {
+    return `${BOT_NAME}: Parece que você está sentindo bastante tensão. Tente respirar fundo por 4 segundos inspirando e 6 segundos expirando, 5 vezes. Depois me diga: o que desencadeou essa sensação hoje?`;
+  }
 
-  localStorage.setItem(CLIENT_ID_KEY, generated);
-  return generated;
-};
+  if (text.includes('triste') || text.includes('deprim') || text.includes('desanim') || text.includes('sozinho') || text.includes('chorar')) {
+    return `${BOT_NAME}: Sinto muito que você esteja se sentindo assim. Você não precisa resolver tudo agora. O que está mais pesado nesse momento?`;
+  }
 
-const CLIENT_ID = getClientId();
+  if (text.includes('estresse') || text.includes('sobrecarreg') || text.includes('exausto') || text.includes('cansaço') || text.includes('burnout')) {
+    return `${BOT_NAME}: O cansaço mental pode ser um sinal de que você está precisando de pausa e acolhimento. Que parte da sua rotina mais está pesando?`;
+  }
 
-const getInitialMessages = () => {
-  const saved = localStorage.getItem(STORAGE_KEY);
+  if (text.includes('relacion') || text.includes('namor') || text.includes('conflito') || text.includes('briga')) {
+    return `${BOT_NAME}: Quando há conflitos, geralmente o que mais pesa não é só a situação, mas como ela toca suas emoções. Você consegue resumir o que aconteceu de forma breve?`;
+  }
 
-  if (!saved) {
-    return [
-      {
-        sender: 'bot',
-        text: 'Olá! Sou a Iris, assistente do psicologIA. Como você está hoje?'
-      }
-    ];
+  if (text.includes('sono') || text.includes('dormir') || text.includes('insônia') || text.includes('insomnia')) {
+    return `${BOT_NAME}: A mente ativa costuma atrapalhar o descanso. Talvez um ritual simples antes de dormir ajude: desligar telas, diminuir estímulos e respirar devagar. O que está dificultando seu sono?`;
+  }
+
+  if (text.includes('obrigado') || text.includes('valeu') || text.includes('ajudou')) {
+    return `${BOT_NAME}: Fico feliz em poder te ouvir. Sempre que quiser continuar a conversa, estou aqui.`;
+  }
+
+  if (text.includes('oi') || text.includes('olá') || text.includes('hello') || text.includes('hey')) {
+    return `${BOT_NAME}: Olá! Sou a ${BOT_NAME}, a assistente do psicologIA. Posso te ouvir e te ajudar a organizar seus pensamentos. Como você está hoje?`;
+  }
+
+  if (text.includes('raiva') || text.includes('irritado') || text.includes('furioso')) {
+    return `${BOT_NAME}: Quando a raiva aparece, muitas vezes ela está sinalizando algo que precisa ser reconhecido antes de ser resolvido. O que te deixou tão agitado(a)?`;
+  }
+
+  if (text.includes('preocup') || text.includes('medo') || text.includes('insegur') || text.includes('duvida') || text.includes('dúvida')) {
+    return `${BOT_NAME}: O medo e a incerteza costumam aparecer quando a mente tenta antecipar problemas. Que parte do momento atual mais te preocupa?`;
+  }
+
+  return `${BOT_NAME}: Obrigada por compartilhar isso comigo. Isso que você está sentindo parece importante e merece atenção. Pode me contar um pouco mais sobre o que está acontecendo e o que te deixou mais afetado(a)? Lembre-se: eu sou um suporte emocional, mas não substituo um profissional da saúde mental.`;
+}
+
+async function generateBotReply(message) {
+  if (!openaiClient) {
+    return getBotReply(message);
   }
 
   try {
-    return JSON.parse(saved);
-  } catch (error) {
-    console.error('Erro ao restaurar o histórico:', error);
-    return [
-      {
-        sender: 'bot',
-        text: 'Olá! Sou a Iris, assistente do psicologIA. Como você está hoje?'
-      }
-    ];
-  }
-};
-
-const persistMessages = (messages) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-};
-
-let history = getInitialMessages();
-
-const renderMessages = () => {
-  chatMessages.innerHTML = '';
-
-  history.forEach((message) => {
-    const wrapper = document.createElement('div');
-    wrapper.className = `message ${message.sender}`;
-
-    const bubble = document.createElement('p');
-    bubble.textContent = message.text;
-    wrapper.appendChild(bubble);
-    chatMessages.appendChild(wrapper);
-  });
-
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-};
-
-const addMessage = (text, sender = 'bot') => {
-  history.push({ sender, text });
-  persistMessages(history);
-  renderMessages();
-};
-
-const showTyping = () => {
-  const typing = document.createElement('div');
-  typing.className = 'message bot typing';
-
-  const indicator = document.createElement('div');
-  indicator.className = 'typing-indicator';
-  indicator.innerHTML = '<span></span><span></span><span></span>';
-
-  typing.appendChild(indicator);
-  chatMessages.appendChild(typing);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-  return typing;
-};
-
-const removeTyping = (typingBubble) => {
-  if (typingBubble && typingBubble.parentNode) {
-    typingBubble.remove();
-  }
-};
-
-const sendToBot = async (text) => {
-  const trimmed = text.trim();
-
-  if (!trimmed || userInput.disabled) {
-    return;
-  }
-
-  addMessage(trimmed, 'user');
-  userInput.value = '';
-  userInput.disabled = true;
-
-  const typingBubble = showTyping();
-
-  try {
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        message: trimmed,
-        clientId: CLIENT_ID
-      })
+    const completion = await openaiClient.chat.completions.create({
+      model: 'gpt-4o-mini',
+      temperature: 0.8,
+      max_tokens: 260,
+      messages: [
+        {
+          role: 'system',
+          content: 'Você é a Iris, uma assistente acolhedora de apoio emocional em português. Responda com empatia, linguagem natural e acolhedora, sem ser dramática nem alarmista. Nunca substitua um profissional da saúde mental. Foque em escuta ativa, suporte emocional, validação e pequenas orientações práticas.'
+        },
+        {
+          role: 'user',
+          content: message
+        }
+      ]
     });
 
-    const data = await response.json();
+    const aiText = completion.choices?.[0]?.message?.content?.trim();
 
-    if (!response.ok || !data.ok) {
-      throw new Error(data.error || 'Não foi possível responder agora.');
+    if (aiText) {
+      return aiText.replace(/\n{3,}/g, '\n\n').trim();
     }
-
-    removeTyping(typingBubble);
-    addMessage(data.response, 'bot');
   } catch (error) {
-    removeTyping(typingBubble);
-    addMessage(
-      'Desculpe, não consegui responder agora. Tente novamente em instantes.',
-      'bot'
-    );
-    console.error(error);
-  } finally {
-    userInput.disabled = false;
-    userInput.focus();
-    renderMessages();
+    console.error('Erro ao consultar a OpenAI:', error.message || error);
   }
-};
 
-chatForm.addEventListener('submit', (event) => {
-  event.preventDefault();
-  sendToBot(userInput.value);
+  return getBotReply(message);
+}
+
+app.get('/api/health', (req, res) => {
+  res.json({
+    ok: true,
+    bot: BOT_NAME,
+    api: openaiClient ? 'openai' : 'local',
+    message: 'Servidor do psicologIA ativo.'
+  });
 });
 
-promptButtons.forEach((button) => {
-  button.addEventListener('click', () => sendToBot(button.textContent.trim()));
+app.post('/api/chat', async (req, res) => {
+  const message = req.body?.message ?? '';
+  const clientId = req.body?.clientId ?? req.body?.id ?? null;
+
+  if (!message || !String(message).trim()) {
+    return res.status(400).json({
+      ok: false,
+      error: 'Mensagem vazia. Escreva algo para conversar com o chatbot.'
+    });
+  }
+
+  const reply = await generateBotReply(String(message));
+  const responseId = randomUUID();
+
+  return res.json({
+    ok: true,
+    response: reply,
+    responseId,
+    clientId,
+    botName: BOT_NAME,
+    source: openaiClient ? 'openai' : 'local'
+  });
 });
 
-clearChatButton.addEventListener('click', () => {
-  history = [
-    {
-      sender: 'bot',
-      text: 'Olá! Sou a Iris, assistente do psicologIA. Como você está hoje?'
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+function startServer(port) {
+  const server = app.listen(port, () => {
+    console.log(`psicologIA rodando em http://localhost:${port}`);
+  });
+
+  server.on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+      console.log(`Porta ${port} ocupada. Tentando ${port + 1}...`);
+      startServer(port + 1);
+      return;
     }
-  ];
-  persistMessages(history);
-  renderMessages();
-  userInput.focus();
-});
 
-renderMessages();
+    throw error;
+  });
+}
+
+module.exports = { app, startServer, BOT_NAME };
+
+if (require.main === module) {
+  startServer(DEFAULT_PORT);
+}
