@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>psicologIA</title>
+    <meta
+      name="description"
+      content="psicologIA - chatbot de apoio emocional e bem-estar mental"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./frontend/style.css" />
+  </head>
+  <body>
+    <div class="background-glow glow-one"></div>
+    <div class="background-glow glow-two"></div>
+
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">P</div>
+        <span>psicologIA</span>
+      </div>
+
+      <div class="topbar-actions">
+        <div class="status-pill">
+          <span class="dot"></span>
+          online
+        </div>
+        <button id="clearChat" class="ghost-btn" type="button">Limpar chat</button>
+      </div>
+    </header>
+
+    <main class="app-shell">
+      <section class="hero panel">
+        <p class="eyebrow">Acompanhamento emocional</p>
+        <h1>Seu espaço para respirar, refletir e seguir com mais clareza.</h1>
+        <p class="subtitle">
+          O psicologIA acolhe suas emoções, oferece apoio emocional e ajuda a
+          organizar pensamentos em momentos de ansiedade, pressão e incerteza.
+        </p>
+
+        <div class="chip-row">
+          <span>Ansiedade</span>
+          <span>Estresse</span>
+          <span>Relacionamentos</span>
+          <span>Autoconhecimento</span>
+        </div>
+
+        <div class="metric-grid">
+          <article class="metric-card">
+            <strong>3x</strong>
+            <span>mais acolhimento</span>
+          </article>
+          <article class="metric-card">
+            <strong>24/7</strong>
+            <span>disponível</span>
+          </article>
+          <article class="metric-card">
+            <strong>Saúde</strong>
+            <span>mental leve</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="chat-panel panel">
+        <div class="chat-header">
+          <div>
+            <p class="mini-label">Chatbot</p>
+            <h2>Iris</h2>
+          </div>
+          <span class="badge">Disponível agora</span>
+        </div>
+
+        <div id="chatMessages" class="chat-messages" aria-live="polite"></div>
+
+        <div class="quick-prompts" aria-label="Sugestões de conversa">
+          <button type="button" class="prompt-btn">Estou ansioso(a)</button>
+          <button type="button" class="prompt-btn">Preciso de apoio emocional</button>
+          <button type="button" class="prompt-btn">Tenho muita pressão</button>
+        </div>
+
+        <form id="chatForm" class="chat-form">
+          <label class="sr-only" for="userInput">Mensagem</label>
+          <input
+            id="userInput"
+            type="text"
+            placeholder="Escreva como você está se sentindo..."
+            autocomplete="off"
+          />
+          <button type="submit">Enviar</button>
+        </form>
+      </section>
+    </main>
+
+    <footer class="disclaimer">
+      <strong>Importante:</strong> o psicologIA oferece acolhimento emocional e suporte
+      leve, mas não substitui atendimento psicológico profissional.
+    </footer>
+
+    <script src="./frontend/script.js"></script>
+  </body>
+</html>
